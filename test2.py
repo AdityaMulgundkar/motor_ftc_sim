@@ -44,6 +44,11 @@ print('Connecting to vehicle on: %s' % connection_string)
 vehicle = connect(connection_string, wait_ready=True)
 
 actuator_pre_arm()
+time.sleep(15)
+
+@vehicle.on_attribute('ch1out')
+def ch1out_listener(self, name, msg):
+    print('%s attribute is %s' % (name,msg))
 
 # Get all original channel values (before override)
 print("Channel values from RC Tx:", vehicle.channels)
@@ -51,13 +56,17 @@ print("Channel values from RC Tx:", vehicle.channels)
 # Override channels
 print("\nChannel overrides: %s" % vehicle.channels.overrides)
 
-print("Set Ch2 override to 200 (indexing syntax)")
 vehicle.channels.overrides['1'] = 2000
 vehicle.channels.overrides['2'] = 800
 vehicle.channels.overrides['3'] = 1500
 vehicle.channels.overrides['4'] = 2000
+
+vehicle.parameters.set('SERVO1_FUNCTION', 2000)
+vehicle.parameters.set('SERVO2_FUNCTION', 1000)
+vehicle.parameters.set('SERVO3_FUNCTION', 2000)
+vehicle.parameters.set('SERVO4_FUNCTION', 2000)
+
 print(" Channel overrides: %s" % vehicle.channels.overrides)
-print(" Ch2 override: %s" % vehicle.channels.overrides['2'])
 
 #Close vehicle object before exiting script
 print("\nClose vehicle object")
