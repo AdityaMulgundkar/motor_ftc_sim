@@ -58,13 +58,9 @@ print("\nChannel overrides: %s" % vehicle.channels.overrides)
 
 vehicle.channels.overrides['1'] = 2000
 vehicle.channels.overrides['2'] = 800
-vehicle.channels.overrides['3'] = 1500
+vehicle.channels.overrides['3'] = 2000
 vehicle.channels.overrides['4'] = 2000
 
-vehicle.parameters.set('SERVO1_FUNCTION', 2000)
-vehicle.parameters.set('SERVO2_FUNCTION', 1000)
-vehicle.parameters.set('SERVO3_FUNCTION', 2000)
-vehicle.parameters.set('SERVO4_FUNCTION', 2000)
 
 print(" Channel overrides: %s" % vehicle.channels.overrides)
 
