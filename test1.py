@@ -46,15 +46,15 @@ def actuator_pre_arm():
         time.sleep(1)
 
     print("Taking off!")
-    vehicle.simple_takeoff(5)  # Take off to target altitude
+    # vehicle.simple_takeoff(5)  # Take off to target altitude
 
-def actuator_test():
+def actuator_test(motor_num):
     msg = vehicle.message_factory.command_long_encode(
         0, 0,    # target_system, target_component
-        mavutil.mavlink.MAV_CMD_DO_SET_SERVO,  # command
+        mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,  # command
         0,  # confirmation
-        6,    # servo number
-        2000,          # servo position between 1000 and 2000
+        motor_num,    # servo number
+        1800,          # servo position between 1000 and 2000
         0, 0, 0, 0, 0)    # param 3 ~ 7 not used
 
     vehicle.send_mavlink(msg)
@@ -78,17 +78,9 @@ def arm_and_takeoff(aTargetAltitude):
         print(" Waiting for arming...")
         time.sleep(1)
 
-    print("Taking off!")
-    vehicle.simple_takeoff(aTargetAltitude)  # Take off to target altitude
+    # print("Taking off!")
+    # vehicle.simple_takeoff(aTargetAltitude)  # Take off to target altitude
 
-    # Check that vehicle has reached takeoff altitude
-    while True:
-        print(" Altitude: ", vehicle.location.global_relative_frame.alt)
-        # Break and return from function just below target altitude.
-        if vehicle.location.global_relative_frame.alt >= aTargetAltitude*0.95:
-            print("Reached target altitude")
-            break
-        time.sleep(1)
 
 
 # Initialize the takeoff sequence to 15m
@@ -102,7 +94,10 @@ print("Take off complete")
 # goto_position_target_local_ned(-35.363,149.16, 5)
 print("Servo test start")
 actuator_pre_arm()
-actuator_test()
+actuator_test(0)
+actuator_test(1)
+actuator_test(2)
+actuator_test(3)
 time.sleep(15)
 print("Servo test end")
 time.sleep(15)
