@@ -107,7 +107,7 @@ class Autopilot:
 
     def set_mode(self, mode):
         ''' Sets autopilot 'mode', by name or id number. '''
-        mode_id = (self.master.mode_mapping()[64]
+        mode_id = (self.master.mode_mapping()[mode.upper()]
                    if isinstance(mode, str) else mode)
         self.master.set_mode(mode_id)
         logging.debug(f'setting {mode=} ({mode_id=}), waiting...')
