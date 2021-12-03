@@ -40,7 +40,8 @@ def set_servo_function(servo: MyServo, mode: str):
 def set_servo_pwm(servo: MyServo, pwm: int):
     if(servo.status==ServoStatus.disabled):
         pwm = 0
-    master.set_servo(channel=servo.id, pwm=1800)
+        print("PWM set to 0 for: ", servo.id)
+    master.set_servo(channel=servo.id, pwm=pwm)
 
 if __name__ == '__main__':
     s1 = MyServo(id=1, status= ServoStatus.enabled)
