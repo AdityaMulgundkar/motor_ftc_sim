@@ -23,7 +23,7 @@ logging.note = partial(NoteLogger.note, logging.getLogger())
 
 class Autopilot:
     """ An ArduSub autopilot connection manager. """
-    def __init__(self, *args, client=True, thrusters=6, **kwargs):
+    def __init__(self, *args, client=True, thrusters=4, **kwargs):
         self.thrusters = thrusters
         self.master = mavutil.mavlink_connection(*args, **kwargs)
 
@@ -169,10 +169,6 @@ class Autopilot:
             lateral      or rcin6,
             camera_pan   or rcin7,
             camera_tilt  or rcin8,
-            lights1      or rcin9,
-            lights2      or rcin10,
-            video_switch or rcin11,
-            rcin12, rcin13, rcin14, rcin15, rcin16, rcin17, rcin18
         )
         logging.info(f'send_rc')
         logging.debug(rc_channel_values)
@@ -262,6 +258,12 @@ class Autopilot:
         logging.note(f'connect_to_server({ip=}, {port=}, {args=}, {kwargs=})')
         return cls(f'udpout:{ip}:{port}', *args, **kwargs, client=False)
 
+    def status_loop(duration, delay=0.05):
+        ''' Loop for 'duration', with 'delay' between iterations. [s] '''
+        start = time.time()
+        while time.time() - start < duration:
+            sub.get_thruster_outputs()
+            time.sleep(delay)
 
 class ExtendedAutopilot(Autopilot):
     ''' An Autopilot with extended control functionality. '''
@@ -320,24 +322,22 @@ class ExtendedAutopilot(Autopilot):
             raise ValueError(f'Invalid per-thruster control {mode=}')
 
         self._backup_servo_functions(backup_timeout)
-        try:
             # try to make sure thrusters are stopped before changeover
-            self._stop_thrusters(mode, stopped_pwm)
-            # set first n SERVO outputs to passthrough first n RC inputs
-            for n in range(1, self.thrusters + 1):
-                self.set_param(f'SERVO{n}_FUNCTION', output_function,
+        # self._stop_thrusters(mode, stopped_pwm)
+        # set first n SERVO outputs to passthrough first n RC inputs
+        for n in range(0, 4):
+            self.set_param(f'SERVO{n}_FUNCTION', output_function,
                                timeout=set_timeout, retries=set_retries)
             # make sure thrusters are actually stopped
-            self._stop_thrusters(mode, stopped_pwm)
+            # self._stop_thrusters(mode, stopped_pwm)
 
-            yield self
-        finally:
-            # make sure to stop thrusters before changing back
-            self._stop_thrusters(mode, stopped_pwm)
-            self._restore_servo_functions(set_timeout, set_retries)
+        e_sub.get_thruster_outputs()
+        # set some thruster values
+        e_sub.set_servo(1, 1800)
+        e_sub.get_thruster_outputs()
+
+        time.sleep(5)
         
-        logging.info('per-thruster control successfully exited')
-        logging.warning('Arming and failsafe requirements re-engaged')
 
     def _stop_thrusters(self, mode, stopped_pwm):
         if mode == 'RCPassThru':
@@ -374,7 +374,7 @@ if __name__ == '__main__':
                               'prints to console if not specified'))
     parser.add_argument('-d', '--datefmt', default='%H:%M:%S',
                         help='datetime format for logging')
-    parser.add_argument('-m', '--mavlink', default='udpin:0.0.0.0:14550',
+    parser.add_argument('-m', '--mavlink', default='udpin:0.0.0.0:14551',
                         help='MAVLink connection specifier')
     parser.add_argument('-r', '--request', action='store_true',
                         help='Connection requires messages to be requested')
@@ -391,57 +391,15 @@ if __name__ == '__main__':
     # run/test the desired functionality
     print('If script gets stuck, press CTRL+C to disarm and quit\n')
 
-    with Autopilot(args.mavlink, client=client) as sub:
-        if args.request:
-            # request SERVO_OUTPUT_RAW at 5Hz
-            sub.set_message_interval('SERVO_OUTPUT_RAW', 2e5)
-        
-        sub.set_mode('manual')
-        sub.get_thruster_outputs()
-        # make sure all motion is set to stationary before arming
-        sub.clear_motion()
-        sub.get_thruster_outputs()
-        sub.arm()
-
-        def status_loop(duration, delay=0.05):
-            ''' Loop for 'duration', with 'delay' between iterations. [s] '''
-            start = time.time()
-            while time.time() - start < duration:
-                sub.get_thruster_outputs()
-                time.sleep(delay)
-
-        # set some roll
-        sub.send_rc(roll=1700)
-        status_loop(1)
-        # add a bit of throttle
-        sub.send_rc(throttle=1600)
-        status_loop(1.5)
-
-    # disarm and wait for a bit
-    time.sleep(5)
-
-    # re-enter
-    with sub:
-        logging.info('RE-ENTERING')
-        sub.set_mode('stabilize')
-        sub.clear_motion()
-        sub.arm()
-        # set yaw velocity and some forward motion at the same time
-        sub.send_rc(yaw=1800, forward=1600)
-        status_loop(2)
-
-    # disconnect, and wait for a bit
-    sub.disconnect()
-    time.sleep(5)
-
     # make a new connection, and engage per-thruster control mode
     with ExtendedAutopilot(args.mavlink, client=client) as e_sub, \
-        e_sub.per_thruster_control():
+        e_sub.per_thruster_control(mode='RCPassThru'):
+        time.sleep(10)
         # display initial thruster output values
         e_sub.get_thruster_outputs()
         # set some thruster values
         e_sub.set_servo(1, 1300)
-        status_loop(1)
         e_sub.set_servo(3, 1400)
         e_sub.set_servo(4, 1550)
-        status_loop(1.5)
+
+        time.sleep(10)
