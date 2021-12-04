@@ -58,8 +58,13 @@ if __name__ == '__main__':
     print("Servo modes set")
 
     pwm_1 = 1800
-    pwm_3 = 1500
-    pwm_4 = 1400
+    pwm_3 = 1800
+    pwm_4 = 1800
+
+    set_servo_pwm(s1, pwm_1)
+    set_servo_pwm(s2, pwm_1)
+    set_servo_pwm(s3, pwm_3)
+    set_servo_pwm(s4, pwm_4)
 
     print("Servo PWM set")
 
