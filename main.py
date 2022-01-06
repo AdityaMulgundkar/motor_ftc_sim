@@ -45,7 +45,7 @@ def set_servo_pwm(servo: MyServo, pwm: int):
 
 if __name__ == '__main__':
     s1 = MyServo(id=1, status= ServoStatus.enabled)
-    s2 = MyServo(id=2, status= ServoStatus.enabled)
+    s2 = MyServo(id=2, status= ServoStatus.disabled)
     s3 = MyServo(id=3, status= ServoStatus.enabled)
     s4 = MyServo(id=4, status= ServoStatus.enabled)
 
@@ -96,3 +96,12 @@ if __name__ == '__main__':
     force_matrix = np.dot(left_matrix,right_matrix)
 
     print("Force Matrix: ", force_matrix)
+
+    # dronekit ned/send command
+    # wait
+    # set_pwm() or disable 1 motor
+    # ensure sensor data is logged (p,q,r..) during commands
+
+    # dronekit command
+    # set_pwm from dronekit or pymavlink
+    # OR vehicle.channel.override
