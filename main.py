@@ -8,7 +8,7 @@ class ServoStatus(enum.Enum):
     disabled = 0
     enabled = 1
 
-class ServoModes(enum.Enum):
+class ServoModes(enum.IntEnum):
     disabled = 0
     RCPassThru = 1
  
@@ -24,11 +24,11 @@ class MyServo:
         self.id = id
         self.status = status
 
-def set_servo_function(servo: MyServo, mode: str):
+def set_servo_function(servo: MyServo, mode: int):
     master.mav.param_set_send(
     master.target_system, master.target_component,
     f'SERVO{servo.id}_FUNCTION'.encode(),
-    1,
+    mode,
     mavutil.mavlink.MAV_PARAM_TYPE_REAL32
     )
     message = master.recv_match(type='PARAM_VALUE', blocking=True).to_dict()
@@ -40,12 +40,12 @@ def set_servo_function(servo: MyServo, mode: str):
 def set_servo_pwm(servo: MyServo, pwm: int):
     if(servo.status==ServoStatus.disabled):
         pwm = 0
-        print("PWM set to 0 for: ", servo.id)
+        print("PWM set to 0 (disabled) for: ", servo.id)
     master.set_servo(channel=servo.id, pwm=pwm)
 
 if __name__ == '__main__':
     s1 = MyServo(id=1, status= ServoStatus.enabled)
-    s2 = MyServo(id=2, status= ServoStatus.disabled)
+    s2 = MyServo(id=2, status= ServoStatus.enabled)
     s3 = MyServo(id=3, status= ServoStatus.enabled)
     s4 = MyServo(id=4, status= ServoStatus.enabled)
 
@@ -58,11 +58,12 @@ if __name__ == '__main__':
     print("Servo modes set")
 
     pwm_1 = 1800
+    pwm_2 = 1800
     pwm_3 = 1800
     pwm_4 = 1800
 
     set_servo_pwm(s1, pwm_1)
-    set_servo_pwm(s2, pwm_1)
+    set_servo_pwm(s2, pwm_2)
     set_servo_pwm(s3, pwm_3)
     set_servo_pwm(s4, pwm_4)
 
@@ -94,4 +95,4 @@ if __name__ == '__main__':
     right_matrix = np.array([pwm_to_force(pwm_1), pwm_to_force(pwm_3), pwm_to_force(pwm_4)])
     force_matrix = np.dot(left_matrix,right_matrix)
 
-    print(force_matrix)
+    print("Force Matrix: ", force_matrix)
